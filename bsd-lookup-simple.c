@@ -55,7 +55,7 @@
 #endif
 
 #ifndef SA_NEXT
-#if !(defined(sun) || defined(__sun))
+#if !(defined(sun) && defined(__sun))
 	#define SA_NEXT(sa) (sa= (struct sockaddr *) ( (char *) sa + SA_SIZE(sa)))
 #endif
 #endif
