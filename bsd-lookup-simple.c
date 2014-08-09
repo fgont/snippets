@@ -48,6 +48,7 @@
         (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?  \
            sizeof(long)         :                               \
            1 + ( (((struct sockaddr *)(sa))->sa_len - 1) | (sizeof(long) - 1) ) )
+#elif #if defined(sun) || defined(__sun)
 #else
 	#define SA_SIZE(sa) sizeof(struct sockaddr)
 #endif
@@ -145,7 +146,9 @@ int main(int argc, char *argv[]){
 
 		sin6= (struct sockaddr_in6 *) (rtm + 1);
 		memset(sin6, 0, sizeof(struct sockaddr_in6));
+#ifdef SIN6_LEN
 		sin6->sin6_len= sizeof(struct sockaddr_in6);
+#endif
 		sin6->sin6_family= AF_INET6;
 		sin6->sin6_addr= nhaddr;
 
@@ -189,7 +192,11 @@ int main(int argc, char *argv[]){
 						if(sa->sa_family == AF_INET6){
 							if(debug_f){
 								puts("DEBUG: RTA_GATEWAY was set");
+#ifdef SIN6_LEN
 								printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
+#else
+								printf("DEBUG: Family: %d, realsize: %d\n", sa->sa_family, SA_SIZE(sa));
+#endif
 								printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
 							}
 
@@ -214,15 +221,22 @@ int main(int argc, char *argv[]){
 							}
 
 							if(debug_f){
-								printf("DEBUG: RTA_GATEWAY: Name: %s, Index: %d\n", nhiface, nhifindex);
+								printf("DEBUG: RTA_IFP: Name: %s, Index: %d\n", nhiface, nhifindex);
 							}
 
 							onlink_f=TRUE;
 						}
 						break;
 				}
-				
+
+#if defined(sun) || defined(__sun)
+				if(i==RTAX_IFP || i==RTAX_IFA)
+					sa = (struct sockaddr *) ((char *) sa + sizeof(struct sockaddr_dl));
+				else
+					sa = (struct sockaddr *) ((char *) sa + sizeof(struct sockaddr_in6));
+#else
 				sa = (struct sockaddr *) ((char *) sa + SA_SIZE(sa));
+#endif
 			}
 		}
 
@@ -235,12 +249,14 @@ int main(int argc, char *argv[]){
 	close(sockfd);
 
 	if(nhifindex_f){
+#if defined (__FreeBSD__) || defined(__NetBSD__) || defined (__OpenBSD__)
 		if(IN6_IS_ADDR_LINKLOCAL(&nhaddr)){
 			/* BSDs store the interface index in s6_addr16[1], so we must clear it */
 			nhaddr.s6_addr16[1] =0;
 			nhaddr.s6_addr16[2] =0;
 			nhaddr.s6_addr16[3] =0;
 		}
+#endif
 
 		if(nhaddr_f){
 			if(inet_ntop(AF_INET6, &nhaddr, pv6addr, sizeof(pv6addr)) == NULL){
