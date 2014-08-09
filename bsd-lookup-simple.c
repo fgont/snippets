@@ -222,7 +222,7 @@ int main(int argc, char *argv[]){
 						break;
 				}
 				
-				sa += SA_SIZE(sa);
+				sa = (char *) sa + SA_SIZE(sa);
 			}
 		}
 
