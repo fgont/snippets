@@ -184,8 +184,8 @@ int main(int argc, char *argv[]){
 					case RTAX_GATEWAY:
 						if(debug_f){
 							puts("DEBUG: RTA_GATEWAY was set");
-							printf("DEBUG: Family: %d, size %d, realsize: %lu\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
-							printf("DEBUG: sizeof(AF_LINK): %lu, sizeof(AF_INET6): %lu\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
+							printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
+							printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
 						}
 
 						if(sa->sa_family == AF_INET6){
