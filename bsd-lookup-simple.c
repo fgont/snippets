@@ -171,9 +171,8 @@ int main(int argc, char *argv[]){
 
 
 		for(i=0; i<RTAX_MAX; i++) {
-			if (rtm->rtm_addrs & (1 << i)) {
-				swith(i){
-
+			if (rtm->rtm_addrs & (1 << i)){
+				switch(i){
 					case RTAX_DST:
 						if(debug_f){
 							puts("DEBUG: RTA_DST was set");
