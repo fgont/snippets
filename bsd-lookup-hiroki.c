@@ -241,6 +241,7 @@ int main(int argc, char *argv[]){
 			if (sockpptr->sdl_family == AF_LINK) {
 				nhifindex= sockpptr->sdl_index;
 				nhifindex_f=TRUE;
+/*
 				if (sockpptr->sdl_nlen >= sizeof(nhiface)) {
 					puts("ifname is too long.");
 					return(EXIT_FAILURE);
@@ -248,6 +249,11 @@ int main(int argc, char *argv[]){
 				strncpy(nhiface, sockpptr->sdl_data,
 				    sockpptr->sdl_nlen);
 				nhiface[sizeof(nhiface) - 1] = '\0';
+*/
+				if(if_indextoname(nhifindex, nhiface) == NULL){
+					puts("Error calling if_indextoname() from sel_next_hop()");
+					return(EXIT_FAILURE);
+				}
 
 				if(debug_f)
 					printf("DEBUG: RTA_IFP: Name: %s, Index: %d\n", nhiface, nhifindex);
