@@ -93,18 +93,13 @@ int main(int argc, char *argv[]){
 	unsigned int		queries=0;
 	char				reply[MAX_RTPAYLOAD];
 	unsigned char		nhifindex_f=0;
-	unsigned int		nhifindex;
+	unsigned int		nhifindex, i;
 	char				nhiface[IFACE_LENGTH], pv6addr[INET6_ADDRSTRLEN];
-
-#if defined(__APPLE__)
-	char				aflink_f= FALSE;
-#endif
 
 	struct rt_msghdr	*rtm;
 	struct sockaddr_in6	*sin6;
 	struct	sockaddr_dl	*sockpptr;
 	struct sockaddr		*sa;
-	void				*end;
 	unsigned char		onlink_f=FALSE, nhaddr_f=FALSE, verbose_f=TRUE, debug_f=FALSE;
 	struct in6_addr		dstaddr, nhaddr;
 
@@ -149,12 +144,6 @@ int main(int argc, char *argv[]){
 		sin6->sin6_family= AF_INET6;
 		sin6->sin6_addr= nhaddr;
 
-#if defined(__APPLE__)
-		if(IN6_IS_ADDR_LINKLOCAL(&nhaddr)){
-			aflink_f= TRUE;
-		}
-#endif
-
 		if(write(sockfd, rtm, rtm->rtm_msglen) == -1){
 			if(verbose_f)
 				puts("write() failed. No route to the intenteded destination in the local routing table");
@@ -170,9 +159,6 @@ int main(int argc, char *argv[]){
 				exit(EXIT_FAILURE);
 			}
 
-			/* The size of the structure should be at least sizof(long) */
-			end= (char *) rtm + r - (sizeof(long) -1);
-
 			if(debug_f){
 				puts("DEBUG: Received message");
 				printf("DEBUG: rtm_type: %d (%d), rtm_pid: %d (%d), rtm_seq: %d (%d)\n", rtm->rtm_type, RTM_GET, rtm->rtm_pid, pid, \
@@ -183,45 +169,56 @@ int main(int argc, char *argv[]){
 		/* The rt_msghdr{} structure is followed by sockaddr structures */
 		sa= (struct sockaddr *) (rtm+1);
 
-		if(rtm->rtm_addrs & RTA_DST){
-			if(debug_f){
-				puts("DEBUG: RTA_DST was set");
-				print_ipv6_address("RTA_DST: ", &( ((struct sockaddr_in6 *)sa)->sin6_addr));
-			}
 
-			SA_NEXT(sa);
-		}
+		for(i=0; i<RTAX_MAX; i++) {
+			if (rtm->rtm_addrs & (1 << i)) {
+				swith(i){
 
-		if(rtm->rtm_addrs & RTA_GATEWAY){
-			if(debug_f){
-				puts("DEBUG: RTA_GATEWAY was set");
-				printf("DEBUG: Family: %d, size %d, realsize: %lu\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
-				printf("DEBUG: sizeof(AF_LINK): %lu, sizeof(AF_INET6): %lu\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
-			}
+					case RTAX_DST:
+						if(debug_f){
+							puts("DEBUG: RTA_DST was set");
+							print_ipv6_address("RTA_DST: ", &( ((struct sockaddr_in6 *)sa)->sin6_addr));
+						}
+						break;
 
-			if(sa->sa_family == AF_INET6){
-				nhaddr= ((struct sockaddr_in6 *) sa)->sin6_addr;
-				nhaddr_f=TRUE;
+					case RTAX_GATEWAY:
+						if(debug_f){
+							puts("DEBUG: RTA_GATEWAY was set");
+							printf("DEBUG: Family: %d, size %d, realsize: %lu\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
+							printf("DEBUG: sizeof(AF_LINK): %lu, sizeof(AF_INET6): %lu\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
+						}
 
-				if(debug_f){
-					print_ipv6_address("DEBUG: RTA_GATEWAY: ", &nhaddr);
+						if(sa->sa_family == AF_INET6){
+							nhaddr= ((struct sockaddr_in6 *) sa)->sin6_addr;
+							nhaddr_f=TRUE;
+
+							if(debug_f){
+								print_ipv6_address("DEBUG: RTA_GATEWAY: ", &nhaddr);
+							}
+						}
+						break;
+
+					case RTAX_IFP:
+						if(sa->sa_family == AF_LINK){
+							sockpptr = (struct sockaddr_dl *) (sa);
+							nhifindex= sockpptr->sdl_index;
+							nhifindex_f=TRUE;
+
+							if(if_indextoname(nhifindex, nhiface) == NULL){
+								puts("Error calling if_indextoname() from sel_next_hop()");
+								return(EXIT_FAILURE);
+							}
+
+							if(debug_f){
+								printf("DEBUG: RTA_GATEWAY: Name: %s, Index: %d\n", nhiface, nhifindex);
+							}
+
+							onlink_f=TRUE;
+						}
+						break;
 				}
-			}
-			else if(sa->sa_family == AF_LINK){
-				sockpptr = (struct sockaddr_dl *) (sa);
-				nhifindex= sockpptr->sdl_index;
-				nhifindex_f=TRUE;
-
-				if(if_indextoname(nhifindex, nhiface) == NULL){
-					puts("Error calling if_indextoname() from sel_next_hop()");
-					return(EXIT_FAILURE);
-				}
-
-				if(debug_f){
-					printf("DEBUG: RTA_GATEWAY: Name: %s, Index: %d\n", nhiface, nhifindex);
-				}
-
-				onlink_f=TRUE;
+				
+				sa += SA_SIZE(sa);
 			}
 		}
 
