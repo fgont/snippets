@@ -55,7 +55,9 @@
 #endif
 
 #ifndef SA_NEXT
+#if !(defined(sun) || defined(__sun))
 	#define SA_NEXT(sa) (sa= (struct sockaddr *) ( (char *) sa + SA_SIZE(sa)))
+#endif
 #endif
 
 #if defined (__FreeBSD__) || defined(__NetBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
