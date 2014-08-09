@@ -227,6 +227,24 @@ int main(int argc, char *argv[]){
 						}
 						break;
 
+					case RTAX_GENMASK:
+						if(sa->sa_family == AF_INET6){
+							if(debug_f){
+								puts("DEBUG: RTA_GENMASK was set");
+#ifdef SIN6_LEN
+								printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
+#endif
+								printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
+							}
+
+							netmask= ((struct sockaddr_in6 *) sa)->sin6_addr;
+
+							if(debug_f){
+								print_ipv6_address("DEBUG: RTA_GENMASK: ", &netmask);
+							}
+						}
+						break;
+
 					case RTAX_IFP:
 						if(sa->sa_family == AF_LINK){
 							sockpptr = (struct sockaddr_dl *) (sa);
