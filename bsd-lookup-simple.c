@@ -48,7 +48,7 @@
         (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?  \
            sizeof(long)         :                               \
            1 + ( (((struct sockaddr *)(sa))->sa_len - 1) | (sizeof(long) - 1) ) )
-#elif #if defined(sun) || defined(__sun)
+#elif defined(sun) || defined(__sun)
 #else
 	#define SA_SIZE(sa) sizeof(struct sockaddr)
 #endif
