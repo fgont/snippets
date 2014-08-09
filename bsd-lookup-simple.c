@@ -38,7 +38,12 @@
 #endif
 
 #ifndef SA_SIZE
-#if defined (__FreeBSD__) || defined(__NetBSD__) || defined (__OpenBSD__) || defined(__APPLE__)
+#if defined(__APPLE__)
+#define SA_SIZE(sa)                                            \
+        (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?  \
+           sizeof(long)         :                               \
+           ((struct sockaddr *)(sa))->sa_len )
+#elif defined (__FreeBSD__) || defined(__NetBSD__) || defined (__OpenBSD__)
 #define SA_SIZE(sa)                                            \
         (  (!(sa) || ((struct sockaddr *)(sa))->sa_len == 0) ?  \
            sizeof(long)         :                               \
@@ -181,13 +186,13 @@ int main(int argc, char *argv[]){
 						break;
 
 					case RTAX_GATEWAY:
-						if(debug_f){
-							puts("DEBUG: RTA_GATEWAY was set");
-							printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
-							printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
-						}
-
 						if(sa->sa_family == AF_INET6){
+							if(debug_f){
+								puts("DEBUG: RTA_GATEWAY was set");
+								printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
+								printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
+							}
+
 							nhaddr= ((struct sockaddr_in6 *) sa)->sin6_addr;
 							nhaddr_f=TRUE;
 
