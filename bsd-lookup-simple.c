@@ -196,8 +196,6 @@ int main(int argc, char *argv[]){
 								puts("DEBUG: RTA_GATEWAY was set");
 #ifdef SIN6_LEN
 								printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
-#else
-								printf("DEBUG: Family: %d, realsize: %d\n", sa->sa_family, SA_SIZE(sa));
 #endif
 								printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
 							}
