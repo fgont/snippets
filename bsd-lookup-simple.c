@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
 	struct	sockaddr_dl	*sockpptr;
 	struct sockaddr		*sa;
 	unsigned char		onlink_f=FALSE, nhaddr_f=FALSE, verbose_f=TRUE, debug_f=FALSE;
-	struct in6_addr		dstaddr, nhaddr;
+	struct in6_addr		dstaddr, nhaddr, netmask;
 
 	if(argc < 2){
 		puts("usage:  lookup [-v] IPV6_ADDRESS");
@@ -205,6 +205,24 @@ int main(int argc, char *argv[]){
 
 							if(debug_f){
 								print_ipv6_address("DEBUG: RTA_GATEWAY: ", &nhaddr);
+							}
+						}
+						break;
+
+					case RTAX_NETMASK:
+						if(sa->sa_family == AF_INET6){
+							if(debug_f){
+								puts("DEBUG: RTA_NETMASK was set");
+#ifdef SIN6_LEN
+								printf("DEBUG: Family: %d, size %d, realsize: %d\n", sa->sa_family, sa->sa_len, SA_SIZE(sa));
+#endif
+								printf("DEBUG: sizeof(AF_LINK): %d, sizeof(AF_INET6): %d\n", sizeof(struct sockaddr_dl), sizeof(struct sockaddr_in6));
+							}
+
+							netmask= ((struct sockaddr_in6 *) sa)->sin6_addr;
+
+							if(debug_f){
+								print_ipv6_address("DEBUG: RTA_NETMASK: ", &netmask);
 							}
 						}
 						break;
