@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
 	struct sockaddr_in6	*sin6;
 	struct	sockaddr_dl	*sockpptr;
 	struct sockaddr		*sa;
-	unsigned char		onlink_f=FALSE, nhaddr_f=FALSE, verbose_f=TRUE, debug_f=FALSE;
+	unsigned char		onlink_f=FALSE, nhaddr_f=FALSE, verbose_f=TRUE, debug_f=FALSE, gateway_f=FALSE;
 	struct in6_addr		dstaddr, nhaddr, netmask;
 
 	if(argc < 2){
@@ -211,6 +211,9 @@ int main(int argc, char *argv[]){
 
 					case RTAX_NETMASK:
 						if(sa->sa_family == AF_INET6){
+							if(rtm->rtm_flags & RTF_GATEWAY)
+								gateway_f=TRUE;
+
 							if(debug_f){
 								puts("DEBUG: RTA_NETMASK was set");
 #ifdef SIN6_LEN
@@ -300,7 +303,7 @@ int main(int argc, char *argv[]){
 				exit(EXIT_FAILURE);
 			}
 
-			printf("Next-Hop address: %s\n", pv6addr);
+			printf("Next-Hop address: %s (%s)\n", pv6addr, gateway_f?"gateway":"on-link node");
 		}
 
 		printf("Outgoing interface: %s (Index: %d)\n", nhiface, nhifindex);
